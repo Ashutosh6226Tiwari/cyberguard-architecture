@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "CyberGuard Link Interception Sequence",
+    "output": ".archify/sequence-link-interception-20261120-110420/sequence.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Ashutosh6226Tiwari/app.cyberguard.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "f9082c6cbc1554a50c6ba57a2917fdde1ce15deb"
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "external",
+      "label": "External App",
+      "sublabel": "WhatsApp / SMS",
+      "sources": [
+        { "path": "app/src/main/AndroidManifest.xml", "line": 53, "end_line": 68, "label": "intent-filter" }
+      ]
+    },
+    {
+      "id": "interceptor",
+      "type": "frontend",
+      "label": "LinkCheckActivity",
+      "sublabel": "Overlay Sheet",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/LinkCheckActivity.kt", "line": 105, "end_line": 147, "label": "interception" }
+      ]
+    },
+    {
+      "id": "validator",
+      "type": "security",
+      "label": "UrlValidator",
+      "sublabel": "Sanitizer",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/UrlValidatorAndSanitizer.kt", "line": 28, "end_line": 60, "label": "validate" }
+      ]
+    },
+    {
+      "id": "scanner",
+      "type": "backend",
+      "label": "LinkScanner",
+      "sublabel": "Coroutines",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LinkScanner.kt", "line": 13, "end_line": 44, "label": "scan" }
+      ]
+    },
+    {
+      "id": "lexical",
+      "type": "security",
+      "label": "LexicalAnalyzer",
+      "sublabel": "15 Signals",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LexicalAnalyzer.kt", "line": 7, "end_line": 56, "label": "heuristics" }
+      ]
+    },
+    {
+      "id": "network",
+      "type": "backend",
+      "label": "NetworkLookups",
+      "sublabel": "DoH + RDAP",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 22, "end_line": 43, "label": "lookups" }
+      ]
+    },
+    {
+      "id": "scoring",
+      "type": "backend",
+      "label": "ScoringEngine",
+      "sublabel": "Risk 0-100",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanScoringEngine.kt", "line": 31, "end_line": 57, "label": "evaluate" }
+      ]
+    },
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "Installed Browser",
+      "sublabel": "Chrome / Firefox",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/BrowserHelper.kt", "line": 23, "end_line": 60, "label": "launch" }
+      ]
+    }
+  ],
+  "segments": [
+    { "from": 160, "to": 290, "label": "Interception & Sanitization" },
+    { "from": 295, "to": 550, "label": "Parallel Scan & Telemetry" },
+    { "from": 555, "to": 700, "label": "Scoring & Verdict" },
+    { "from": 705, "to": 850, "label": "Review & Browser Handoff" }
+  ],
+  "messages": [
+    {
+      "id": "intent-launch",
+      "from": "app",
+      "to": "interceptor",
+      "y": 170,
+      "label": "ACTION_VIEW (http/https)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "validate-req",
+      "from": "interceptor",
+      "to": "validator",
+      "y": 205,
+      "label": "validateIncomingUrl(rawUrl)",
+      "variant": "default"
+    },
+    {
+      "id": "validate-res",
+      "from": "validator",
+      "to": "interceptor",
+      "y": 240,
+      "label": "Valid(normalizedUrl)",
+      "variant": "return",
+      "note": "Strips credentials and ensures 2048-char safety limit"
+    },
+    {
+      "id": "scan-req",
+      "from": "interceptor",
+      "to": "scanner",
+      "y": 310,
+      "label": "scan(normalizedUrl)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lexical-req",
+      "from": "scanner",
+      "to": "lexical",
+      "y": 350,
+      "label": "analyze(rawUrl)",
+      "variant": "default"
+    },
+    {
+      "id": "lexical-res",
+      "from": "lexical",
+      "to": "scanner",
+      "y": 390,
+      "label": "LexicalFeatures (15 signals)",
+      "variant": "return",
+      "note": "Evaluates entropy, homographs, and brand keywords on device"
+    },
+    {
+      "id": "network-req",
+      "from": "scanner",
+      "to": "network",
+      "y": 460,
+      "label": "async: lookupDns() + lookupRdap()",
+      "variant": "default"
+    },
+    {
+      "id": "network-res",
+      "from": "network",
+      "to": "scanner",
+      "y": 500,
+      "label": "DnsLookupResult + RdapLookupResult",
+      "variant": "return",
+      "note": "DoH A/NS/MX records and ICANN registration age"
+    },
+    {
+      "id": "scoring-req",
+      "from": "scanner",
+      "to": "scoring",
+      "y": 570,
+      "label": "evaluate(lexical, dns, rdap)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scoring-res",
+      "from": "scoring",
+      "to": "scanner",
+      "y": 610,
+      "label": "ScanResult (0-100 score & verdict)",
+      "variant": "return",
+      "note": "Computes verdict and dynamic confidence percentage"
+    },
+    {
+      "id": "scanner-res",
+      "from": "scanner",
+      "to": "interceptor",
+      "y": 680,
+      "label": "return ScanResult",
+      "variant": "return"
+    },
+    {
+      "id": "sheet-render",
+      "from": "interceptor",
+      "to": "app",
+      "y": 720,
+      "label": "render bottom sheet verdict",
+      "variant": "default",
+      "note": "Presents risk score and actionable recommendation"
+    },
+    {
+      "id": "handoff-browser",
+      "from": "interceptor",
+      "to": "browser",
+      "y": 790,
+      "label": "explicit ACTION_VIEW intent",
+      "variant": "emphasis",
+      "note": "Dispatches link to secondary browser after user confirmation"
+    }
+  ],
+  "activations": [
+    { "participant": "interceptor", "from": 170, "to": 800, "type": "frontend" },
+    { "participant": "validator", "from": 205, "to": 240, "type": "security" },
+    { "participant": "scanner", "from": 310, "to": 680, "type": "backend" },
+    { "participant": "lexical", "from": 350, "to": 390, "type": "security" },
+    { "participant": "network", "from": 460, "to": 500, "type": "backend" },
+    { "participant": "scoring", "from": 570, "to": 610, "type": "backend" },
+    { "participant": "browser", "from": 790, "to": 830, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Intent Interception & Sanitization",
+      "items": [
+        "LinkCheckActivity intercepts external taps via ACTION_VIEW and ACTION_SEND filters",
+        "UrlValidatorAndSanitizer enforces length caps and rejects dangerous pseudo-schemes",
+        "Produces clean normalized URL before scan orchestration begins"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Zero-Fetch Scan Engine",
+      "items": [
+        "LinkScanner executes 15 on-device lexical checks via LexicalAnalyzer",
+        "NetworkLookups concurrently queries Google DoH and ICANN RDAP with 64 KB limits",
+        "ScanScoringEngine maps signals to a 0–100 score and categorical verdict"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Loop-Safe Forwarding",
+      "items": [
+        "Verdict sheet adapts button hierarchy based on risk severity",
+        "BrowserHelper queries installed browsers and excludes CyberGuard's own package",
+        "Forwards original link to secondary browser only upon user confirmation"
+      ]
+    }
+  ]
+}

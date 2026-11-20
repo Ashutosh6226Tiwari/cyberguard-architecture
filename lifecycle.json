@@ -1,0 +1,158 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "CyberGuard Scanned Link Lifecycle",
+    "output": ".archify/lifecycle-scanned-link-20261120-110834/lifecycle.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Ashutosh6226Tiwari/app.cyberguard.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "f9082c6cbc1554a50c6ba57a2917fdde1ce15deb"
+    }
+  },
+  "mainPath": ["received", "scanning", "safe", "opened"],
+  "states": [
+    {
+      "id": "received",
+      "type": "start",
+      "label": "Received",
+      "sublabel": "Intent Intercepted",
+      "tag": "ACTION_VIEW",
+      "step": "01",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/LinkCheckActivity.kt", "line": 114, "end_line": 128, "label": "intent-received" }
+      ]
+    },
+    {
+      "id": "scanning",
+      "type": "active",
+      "label": "Scanning",
+      "sublabel": "Parallel Heuristics",
+      "tag": "Zero-Fetch",
+      "step": "02",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LinkScanner.kt", "line": 13, "end_line": 30, "label": "scan-coroutine" }
+      ]
+    },
+    {
+      "id": "safe",
+      "type": "waiting",
+      "label": "Safe",
+      "sublabel": "Score < 20",
+      "tag": "Low Risk",
+      "step": "03",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanModels.kt", "line": 3, "end_line": 8, "label": "verdict-safe" }
+      ]
+    },
+    {
+      "id": "suspicious",
+      "type": "decision",
+      "label": "Suspicious",
+      "sublabel": "Score 20-49",
+      "tag": "Warning Gate",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanModels.kt", "line": 3, "end_line": 8, "label": "verdict-suspicious" }
+      ]
+    },
+    {
+      "id": "blocked",
+      "type": "failure",
+      "label": "Blocked",
+      "sublabel": "Phishing / Aborted",
+      "tag": "Terminal Shield",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanModels.kt", "line": 3, "end_line": 8, "label": "verdict-phishing" }
+      ]
+    },
+    {
+      "id": "opened",
+      "type": "success",
+      "label": "Opened",
+      "sublabel": "Handoff to Browser",
+      "tag": "External Browser",
+      "step": "04",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/BrowserHelper.kt", "line": 23, "end_line": 60, "label": "browser-launch" }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "recv-to-scan",
+      "from": "received",
+      "to": "scanning",
+      "label": "start scan"
+    },
+    {
+      "id": "scan-to-safe",
+      "from": "scanning",
+      "to": "safe",
+      "label": "score < 20"
+    },
+    {
+      "id": "safe-to-opened",
+      "from": "safe",
+      "to": "opened",
+      "label": "open link",
+      "variant": "emphasis"
+    },
+    {
+      "id": "scan-to-suspicious",
+      "from": "scanning",
+      "to": "suspicious",
+      "label": "score 20-49",
+      "variant": "security"
+    },
+    {
+      "id": "scan-to-blocked",
+      "from": "scanning",
+      "to": "blocked",
+      "label": "phishing >= 50",
+      "variant": "security"
+    },
+    {
+      "id": "suspicious-to-opened",
+      "from": "suspicious",
+      "to": "opened",
+      "label": "confirm override",
+      "variant": "dashed"
+    },
+    {
+      "id": "suspicious-to-blocked",
+      "from": "suspicious",
+      "to": "blocked",
+      "label": "return to safety"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ingress & Scan States",
+      "items": [
+        "Received: Intent captured by LinkCheckActivity before the browser can load the page",
+        "Scanning: LinkScanner executes parallel lexical heuristics, Google DoH, and ICANN RDAP",
+        "Zero target loading guarantees malware or credential harvesters cannot execute"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Verdict Evaluation",
+      "items": [
+        "Safe: Score < 20 triggers prominent 'Open anyway' primary action button",
+        "Suspicious: Score 20–49 presents warning dialog and requires explicit confirmation",
+        "Blocked: Score >= 50 or NXDOMAIN flags phishing, setting 'Go back' as primary action"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Terminal Outcomes",
+      "items": [
+        "Opened: Clean intent handoff to secondary browser (Chrome/Firefox/Brave) avoiding loops",
+        "Blocked: Dismisses overlay sheet safely and retains sanitized history on-device"
+      ]
+    }
+  ]
+}

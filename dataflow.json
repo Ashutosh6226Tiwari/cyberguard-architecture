@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "CyberGuard Trust Boundary & Data Flow",
+    "output": ".archify/dataflow-trust-boundary-20261120-110644/dataflow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Ashutosh6226Tiwari/app.cyberguard.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "f9082c6cbc1554a50c6ba57a2917fdde1ce15deb"
+    }
+  },
+  "stages": [
+    { "label": "Ingress" },
+    { "label": "On-Device Sanitizer" },
+    { "label": "Analysis & Lookups" },
+    { "label": "On-Device Scoring" },
+    { "label": "Local Persistence" }
+  ],
+  "nodes": [
+    {
+      "id": "intent-src",
+      "type": "external",
+      "label": "External App",
+      "sublabel": "WhatsApp / SMS",
+      "stage": 0,
+      "row": 1,
+      "tag": "Raw Intent",
+      "sources": [
+        { "path": "app/src/main/AndroidManifest.xml", "line": 53, "end_line": 68, "label": "intent-filter" }
+      ]
+    },
+    {
+      "id": "volatile-mem",
+      "type": "backend",
+      "label": "Volatile Memory",
+      "sublabel": "Active Session",
+      "stage": 1,
+      "row": 0,
+      "tag": "In-Memory Only",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/LinkCheckActivity.kt", "line": 126, "end_line": 147, "label": "in-memory" }
+      ]
+    },
+    {
+      "id": "sanitizer",
+      "type": "security",
+      "label": "UrlValidator",
+      "sublabel": "Redaction Guard",
+      "stage": 1,
+      "row": 1,
+      "tag": "Trust Boundary",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/UrlValidatorAndSanitizer.kt", "line": 28, "end_line": 60, "label": "sanitizer" }
+      ]
+    },
+    {
+      "id": "lexical-local",
+      "type": "security",
+      "label": "LexicalAnalyzer",
+      "sublabel": "15 Heuristics",
+      "stage": 2,
+      "row": 0,
+      "tag": "On-Device Only",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LexicalAnalyzer.kt", "line": 7, "end_line": 56, "label": "lexical" }
+      ]
+    },
+    {
+      "id": "doh-service",
+      "type": "cloud",
+      "label": "Google DoH",
+      "sublabel": "dns.google/resolve",
+      "stage": 2,
+      "row": 1,
+      "tag": "Off-Device Query",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 22, "end_line": 28, "label": "doh" }
+      ]
+    },
+    {
+      "id": "rdap-service",
+      "type": "cloud",
+      "label": "ICANN RDAP",
+      "sublabel": "rdap.org/domain",
+      "stage": 2,
+      "row": 2,
+      "tag": "Off-Device Query",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 24, "end_line": 28, "label": "rdap" }
+      ]
+    },
+    {
+      "id": "scoring-engine",
+      "type": "backend",
+      "label": "ScoringEngine",
+      "sublabel": "0-100 Weighted Model",
+      "stage": 3,
+      "row": 1,
+      "tag": "Local Verdict",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanScoringEngine.kt", "line": 10, "end_line": 57, "label": "scoring" }
+      ]
+    },
+    {
+      "id": "room-history",
+      "type": "database",
+      "label": "Room History DB",
+      "sublabel": "cyberguard_history.db",
+      "stage": 4,
+      "row": 0,
+      "tag": "Redacted scheme://host",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/data/CyberGuardDatabase.kt", "line": 10, "end_line": 47, "label": "database" }
+      ]
+    },
+    {
+      "id": "overlay-ui",
+      "type": "frontend",
+      "label": "Verdict UI",
+      "sublabel": "BottomSheet Sheet",
+      "stage": 4,
+      "row": 1,
+      "tag": "On-Device Display",
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/LinkCheckActivity.kt", "line": 139, "end_line": 146, "label": "ui" }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "raw-intent-flow",
+      "from": "intent-src",
+      "to": "sanitizer",
+      "label": "raw URL + intent",
+      "classification": "untrusted ingress",
+      "variant": "emphasis"
+    },
+    {
+      "id": "volatile-url-flow",
+      "from": "sanitizer",
+      "to": "volatile-mem",
+      "label": "full URL (memory)",
+      "classification": "volatile session",
+      "variant": "security"
+    },
+    {
+      "id": "lexical-input-flow",
+      "from": "volatile-mem",
+      "to": "lexical-local",
+      "label": "path & tokens",
+      "classification": "on-device only",
+      "variant": "security"
+    },
+    {
+      "id": "doh-outbound-flow",
+      "from": "sanitizer",
+      "to": "doh-service",
+      "label": "domain name only",
+      "classification": "off-device lookup",
+      "variant": "default"
+    },
+    {
+      "id": "rdap-outbound-flow",
+      "from": "sanitizer",
+      "to": "rdap-service",
+      "label": "domain name only",
+      "classification": "off-device lookup",
+      "variant": "default"
+    },
+    {
+      "id": "lexical-signals-flow",
+      "from": "lexical-local",
+      "to": "scoring-engine",
+      "label": "15 risk signals",
+      "classification": "on-device signals",
+      "variant": "security"
+    },
+    {
+      "id": "doh-inbound-flow",
+      "from": "doh-service",
+      "to": "scoring-engine",
+      "label": "A/NS/MX records",
+      "classification": "DNS telemetry",
+      "variant": "default"
+    },
+    {
+      "id": "rdap-inbound-flow",
+      "from": "rdap-service",
+      "to": "scoring-engine",
+      "label": "registration age",
+      "classification": "RDAP telemetry",
+      "variant": "default"
+    },
+    {
+      "id": "persist-history-flow",
+      "from": "scoring-engine",
+      "to": "room-history",
+      "label": "redacted host",
+      "classification": "sanitized record",
+      "variant": "dashed"
+    },
+    {
+      "id": "verdict-ui-flow",
+      "from": "scoring-engine",
+      "to": "overlay-ui",
+      "label": "verdict & score",
+      "classification": "local verdict",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "On-Device Data Boundary",
+      "items": [
+        "Full unredacted URLs, query parameters, auth tokens, and paths remain exclusively in volatile memory",
+        "Target web pages are NEVER contacted or downloaded (zero-fetch guarantee)",
+        "LexicalAnalyzer processes Shannon entropy, brand homographs, and leet-speak entirely on-device"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Off-Device Telemetry Boundary",
+      "items": [
+        "Only the isolated domain name (e.g. example.com) leaves the device",
+        "Google DoH (dns.google) is queried for A, NS, MX, and TXT records over HTTPS",
+        "ICANN RDAP (rdap.org) is queried solely for domain creation timestamp and registrar",
+        "Zero personal identifiers, device IDs, IP addresses, or URL query parameters are transmitted"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Local Persistence & Sanitization",
+      "items": [
+        "UrlValidatorAndSanitizer strips userinfo, paths, queries, and fragments",
+        "Room database (cyberguard_history.db) persists only sanitized scheme://host strings",
+        "Storage is strictly capped at 200 entries with no cloud backup (allowBackup=false)"
+      ]
+    }
+  ]
+}

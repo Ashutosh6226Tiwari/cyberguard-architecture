@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CyberGuard Runtime Architecture",
+    "output": ".archify/architecture-cyberguard-runtime-20261120-110000/cyberguard-runtime.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Ashutosh6226Tiwari/app.cyberguard.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "f9082c6cbc1554a50c6ba57a2917fdde1ce15deb"
+    }
+  },
+  "components": [
+    {
+      "id": "external-apps",
+      "type": "external",
+      "label": "External Apps",
+      "sublabel": "WhatsApp / SMS / Mail",
+      "tag": "Link Source",
+      "pos": [40, 220],
+      "size": [150, 60],
+      "sources": [
+        { "path": "app/src/main/AndroidManifest.xml", "line": 53, "end_line": 68, "label": "intent-filter" }
+      ]
+    },
+    {
+      "id": "link-check-activity",
+      "type": "frontend",
+      "label": "LinkCheckActivity",
+      "sublabel": "Overlay Bottom Sheet",
+      "tag": "Transparent UI",
+      "pos": [340, 220],
+      "size": [150, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/LinkCheckActivity.kt", "line": 105, "end_line": 147, "label": "interception" }
+      ]
+    },
+    {
+      "id": "url-validator",
+      "type": "security",
+      "label": "UrlValidator",
+      "sublabel": "Scheme & Length Guard",
+      "tag": "Sanitizer",
+      "pos": [340, 360],
+      "size": [150, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/UrlValidatorAndSanitizer.kt", "line": 12, "end_line": 60, "label": "validation" }
+      ]
+    },
+    {
+      "id": "link-scanner",
+      "type": "backend",
+      "label": "LinkScanner",
+      "sublabel": "Scan Orchestrator",
+      "tag": "Coroutines",
+      "pos": [580, 220],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LinkScanner.kt", "line": 6, "end_line": 44, "label": "orchestration" }
+      ]
+    },
+    {
+      "id": "lexical-analyzer",
+      "type": "security",
+      "label": "LexicalAnalyzer",
+      "sublabel": "15 Heuristic Signals",
+      "tag": "On-Device",
+      "pos": [580, 80],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/LexicalAnalyzer.kt", "line": 7, "end_line": 56, "label": "rules" }
+      ]
+    },
+    {
+      "id": "network-lookups",
+      "type": "backend",
+      "label": "NetworkLookups",
+      "sublabel": "Bounded OkHttpClient",
+      "tag": "<=64KB Stream",
+      "pos": [800, 80],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 29, "end_line": 60, "label": "client" }
+      ]
+    },
+    {
+      "id": "google-doh",
+      "type": "cloud",
+      "label": "Google DoH",
+      "sublabel": "dns.google/resolve",
+      "tag": "A/NS/MX/TXT",
+      "pos": [1060, 40],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 22, "end_line": 28, "label": "doh-endpoint" }
+      ]
+    },
+    {
+      "id": "icann-rdap",
+      "type": "cloud",
+      "label": "ICANN RDAP",
+      "sublabel": "rdap.org/domain",
+      "tag": "Domain Age",
+      "pos": [1060, 120],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/NetworkLookups.kt", "line": 24, "end_line": 28, "label": "rdap-endpoint" }
+      ]
+    },
+    {
+      "id": "scoring-engine",
+      "type": "backend",
+      "label": "ScanScoringEngine",
+      "sublabel": "Weighted Risk Model",
+      "tag": "0-100 Score",
+      "pos": [800, 220],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/scan/ScanScoringEngine.kt", "line": 10, "end_line": 57, "label": "scoring" }
+      ]
+    },
+    {
+      "id": "room-db",
+      "type": "database",
+      "label": "CyberGuard DB",
+      "sublabel": "Room SQLite",
+      "tag": "Redacted scheme://host",
+      "pos": [580, 360],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/data/CyberGuardDatabase.kt", "line": 10, "end_line": 47, "label": "persistence" }
+      ]
+    },
+    {
+      "id": "browser-helper",
+      "type": "backend",
+      "label": "BrowserHelper",
+      "sublabel": "Package Filter",
+      "tag": "Loop Prevention",
+      "pos": [800, 360],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/java/com/ashutosh/cyberguard/util/BrowserHelper.kt", "line": 23, "end_line": 60, "label": "filter" }
+      ]
+    },
+    {
+      "id": "secondary-browser",
+      "type": "external",
+      "label": "Installed Browser",
+      "sublabel": "Chrome / Firefox / Brave",
+      "tag": "Target Host",
+      "pos": [1060, 360],
+      "size": [140, 60],
+      "sources": [
+        { "path": "app/src/main/AndroidManifest.xml", "line": 8, "end_line": 21, "label": "browser-queries" }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Android OS Sandbox (com.ashutosh.cyberguard)",
+      "wraps": [
+        "link-check-activity",
+        "url-validator",
+        "link-scanner",
+        "lexical-analyzer",
+        "network-lookups",
+        "scoring-engine",
+        "room-db",
+        "browser-helper"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Zero-Fetch Scan Pipeline",
+      "wraps": [
+        "link-scanner",
+        "lexical-analyzer",
+        "network-lookups",
+        "scoring-engine"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "intent-interception",
+      "from": "external-apps",
+      "to": "link-check-activity",
+      "label": "ACTION_VIEW",
+      "variant": "emphasis"
+    },
+    {
+      "id": "validate-input",
+      "from": "link-check-activity",
+      "to": "url-validator",
+      "label": "sanitize"
+    },
+    {
+      "id": "orchestrate-scan",
+      "from": "link-check-activity",
+      "to": "link-scanner",
+      "label": "scan(url)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lexical-check",
+      "from": "link-scanner",
+      "to": "lexical-analyzer",
+      "label": "15 signals"
+    },
+    {
+      "id": "domain-extract",
+      "from": "lexical-analyzer",
+      "to": "network-lookups",
+      "label": "domain"
+    },
+    {
+      "id": "doh-query",
+      "from": "network-lookups",
+      "to": "google-doh",
+      "label": "DoH query"
+    },
+    {
+      "id": "rdap-query",
+      "from": "network-lookups",
+      "to": "icann-rdap",
+      "label": "RDAP query"
+    },
+    {
+      "id": "evaluate-risk",
+      "from": "network-lookups",
+      "to": "scoring-engine",
+      "label": "telemetry"
+    },
+    {
+      "id": "lexical-to-scoring",
+      "from": "link-scanner",
+      "to": "scoring-engine",
+      "label": "evaluate"
+    },
+    {
+      "id": "save-history",
+      "from": "link-scanner",
+      "to": "room-db",
+      "label": "redacted save",
+      "variant": "dashed"
+    },
+    {
+      "id": "verdict-action",
+      "from": "scoring-engine",
+      "to": "browser-helper",
+      "label": "open anyway"
+    },
+    {
+      "id": "forward-link",
+      "from": "browser-helper",
+      "to": "secondary-browser",
+      "label": "launch browser",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Link Interception & Sanitization",
+      "items": [
+        "LinkCheckActivity registers for ACTION_VIEW and ACTION_SEND to intercept tapped links",
+        "UrlValidatorAndSanitizer enforces 2048-char limits and blocks dangerous pseudo-schemes",
+        "Volatile in-memory URL keeps destination query params while stripping credentials for storage"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Zero-Fetch Scan Engine",
+      "items": [
+        "Never loads, preloads, or executes code on the target web destination",
+        "LexicalAnalyzer inspects 15 on-device heuristic signals including brand homographs",
+        "NetworkLookups runs parallel queries to Google DoH and ICANN RDAP with 64 KB stream limits",
+        "ScanScoringEngine maps signals to a 0–100 risk score and SAFE, SUSPICIOUS, or PHISHING verdict"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Loop Prevention & Forwarding",
+      "items": [
+        "BrowserHelper enumerates system browsers and explicitly filters out CyberGuard",
+        "Dispatches explicit intents to secondary browsers (Chrome, Firefox, Brave) on user confirmation",
+        "Room database persists only redacted scheme://host records capped at 200 entries"
+      ]
+    }
+  ]
+}
